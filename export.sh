@@ -49,23 +49,29 @@ bootstrap(){
     NODETOOL_LOG="$CASSANDRA_IO_HOME/log/snapshot-$TIMESTAMP.log"
 }
 
+
 cassandra_info(){
     pids="`pgrep java`"
-    for pid in "$pids" ; do
+    for pid in $pids ; do
         cwd=`lsof -p $pid | grep cwd | awk '{print $9}'`
         if [ -f "$cwd/cassandra" ] ; then
             CASSANDRA_HOME="`dirname $cwd`"
             CASSANDRA_PID="$pid"
         fi
     done
-    echo "Cassandra seems to be running with pid $CASSANDRA_PID (this is my best guess)"
-    echo "For higher confidence results, please set CASSANDRA_HOME environment variable"
+    if [ ! -z "$CASSANDRA_PID" ] ; then
+        echo "Cassandra seems to be running with pid $CASSANDRA_PID (this is my best guess)"
+    else
+        echo "Cassandra doesn't seem to be running"
+        exit 1
+    fi
 }
 
 locate_nodetool() {
     # guess where cassandra is running from
     if [ ! -f "$CASSANDRA_HOME" ] ; then
         cassandra_info
+        echo "For higher confidence results, please set CASSANDRA_HOME environment variable"
     fi
     # can we just use nodetool, ie, is it in $PATH ?
     if [ -f "`which nodetool`" ] ; then
@@ -76,7 +82,7 @@ locate_nodetool() {
     # at this stage NODETOOL must be set; if it isn't, i couldn't find it
     if [ -z "$NODETOOL" ] ; then
         echo "Cassandra nodetool couldn't be located. Please include it in your PATH or set CASSANDRA_HOME"
-        exit 1
+        exit 3
     fi
 }
 
