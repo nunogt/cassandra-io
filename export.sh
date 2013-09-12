@@ -50,7 +50,11 @@ bootstrap(){
 }
 
 cassandra_parse_config(){
-    echo "parse config"
+    # we don't really parse the conf file; it's painful to do it in bash
+    # let's just extract what we need for now and deal with yaml in future versions
+    CASSANDRA_DATA="`cat $1 | grep data_file_directories: -A 1 | grep - | awk {'print $2'}`"
+    CASSANDRA_COMMITLOG="`cat $1 | grep commitlog_directory: | awk {'print $2'}`"
+    CASSANDRA_CACHES="`cat $1 | grep saved_caches_directory: | awk {'print $2'}`"
 }
 
 cassandra_info(){
@@ -115,10 +119,10 @@ snapshot_store(){
             SNAPSHOT_NUMBER="`echo $line | awk {'print $3'}`"
         fi
     done < $NODETOOL_LOG
-    SNAPSHOTS=$(find $CASSANDRA_HOME/ -type d -iname "$SNAPSHOT_NUMBER")
+    SNAPSHOTS=$(find $CASSANDRA_DATA/ -type d -iname "$SNAPSHOT_NUMBER")
     if [ ! -z "$SNAPSHOTS" ] ; then
         for s in $SNAPSHOTS ; do
-            rsync -aR $CASSANDRA_HOME/.`echo ${s#$CASSANDRA_HOME}` $CASSANDRA_IO_HOME/snapshots/$SNAPSHOT_NUMBER/
+            rsync -aR $CASSANDRA_DATA/.`echo ${s#$CASSANDRA_DATA}` $CASSANDRA_IO_HOME/snapshots/$SNAPSHOT_NUMBER/
             check_exit_status $?
         done
     else
@@ -128,8 +132,6 @@ snapshot_store(){
     echo "Cassandra snapshot stored at $CASSANDRA_IO_HOME/snapshots/$SNAPSHOT_NUMBER/"
     exit 0
 }
-
-
 
 bootstrap
 locate_nodetool
