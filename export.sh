@@ -45,6 +45,7 @@ bootstrap(){
     fi
     mkdir -p $CASSANDRA_IO_HOME/{log,snapshots}
     check_exit_status $?
+    CASSANDRA_CONF="$1"
     TIMESTAMP="`date +%s`"
     NODETOOL_LOG="$CASSANDRA_IO_HOME/log/snapshot-$TIMESTAMP.log"
 }
@@ -75,14 +76,16 @@ cassandra_info(){
         echo "Cassandra is not running"
         exit 1
     fi
-    # attemp to determine cassandra.yaml path (lots of guesswork required)
-    if [ ! -f "$CASSANDRA_HOME/conf/cassandra.yaml" ] ; then
-        proccwd=`lsof -p $CASSANDRA_PID | grep cwd | awk '{print $9}'`
-        if [ -f "$proccwd/../conf/cassandra.yaml" ] ; then
-            CASSANDRA_HOME="`dirname $proccwd`"
-        fi
-    fi  
-    CASSANDRA_CONF="$CASSANDRA_HOME/conf/cassandra.yaml"
+    if [ -z "$CASSANDRA_CONF" ] ; then
+        # attemp to determine cassandra.yaml location (lots of guesswork required)
+        if [ ! -f "$CASSANDRA_HOME/conf/cassandra.yaml" ] ; then
+            proccwd=`lsof -p $CASSANDRA_PID | grep cwd | awk '{print $9}'`
+            if [ -f "$proccwd/../conf/cassandra.yaml" ] ; then
+                CASSANDRA_HOME="`dirname $proccwd`"
+            fi
+        fi  
+        CASSANDRA_CONF="$CASSANDRA_HOME/conf/cassandra.yaml"
+    fi
     if [ -f "$CASSANDRA_CONF" ] ; then
         cassandra_parse_config $CASSANDRA_CONF
     else
@@ -100,8 +103,8 @@ locate_nodetool() {
     else
         NODETOOL="$CASSANDRA_HOME/bin/nodetool" # maybe we're lucky
     fi
-    # at this stage NODETOOL must be set; if it isn't, i couldn't find it
-    if [ -z "$NODETOOL" ] ; then
+    # at this stage NODETOOL must point to something; if it doesn't, i couldn't find it
+    if [ ! -f "$NODETOOL" ] ; then
         echo "Cassandra nodetool couldn't be located. Please include it in your PATH or set CASSANDRA_HOME"
         exit 3
     fi
@@ -133,7 +136,7 @@ snapshot_store(){
     exit 0
 }
 
-bootstrap
+bootstrap $1
 locate_nodetool
 snapshot_nodetool
 snapshot_store
