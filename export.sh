@@ -32,7 +32,7 @@ resolve_links_linux() {
 }
 
 resolve_links(){
-    # GNU coreutils make this easy, so let's test for that
+    # GNU coreutils makes this easy, so let's test for that
     case "`uname`" in
         Linux*) resolve_links_linux;;
         *) resolve_links_unix;;
@@ -49,30 +49,47 @@ bootstrap(){
     NODETOOL_LOG="$CASSANDRA_IO_HOME/log/snapshot-$TIMESTAMP.log"
 }
 
+cassandra_parse_config(){
+    echo "parse config"
+}
 
 cassandra_info(){
     pids="`pgrep java`"
-    for pid in $pids ; do
-        cwd=`lsof -p $pid | grep cwd | awk '{print $9}'`
-        if [ -f "$cwd/cassandra" ] ; then
-            CASSANDRA_HOME="`dirname $cwd`"
-            CASSANDRA_PID="$pid"
+    if [ ! -z "$pids" ] ; then
+        for pid in $pids ; do
+            proc="`ps uwx | grep $pid | grep CassandraDaemon | grep -v grep | awk '{print $2}'`"
+            if [ "$proc" == "$pid" ] ; then
+                CASSANDRA_PID="$pid"
+                echo "Cassandra seems to be running with pid $CASSANDRA_PID (this is my best guess)"
+            fi
+        done
+        if [ -z "$CASSANDRA_PID" ] ; then
+            echo "Couldn't reliably determine Cassandra pidfile. Is it running?"
+            exit 1
         fi
-    done
-    if [ ! -z "$CASSANDRA_PID" ] ; then
-        echo "Cassandra seems to be running with pid $CASSANDRA_PID (this is my best guess)"
     else
-        echo "Cassandra doesn't seem to be running"
+        echo "Cassandra is not running"
+        exit 1
+    fi
+    # attemp to determine cassandra.yaml path (lots of guesswork required)
+    if [ ! -f "$CASSANDRA_HOME/conf/cassandra.yaml" ] ; then
+        proccwd=`lsof -p $CASSANDRA_PID | grep cwd | awk '{print $9}'`
+        if [ -f "$proccwd/../conf/cassandra.yaml" ] ; then
+            CASSANDRA_HOME="`dirname $proccwd`"
+        fi
+    fi  
+    CASSANDRA_CONF="$CASSANDRA_HOME/conf/cassandra.yaml"
+    if [ -f "$CASSANDRA_CONF" ] ; then
+        cassandra_parse_config $CASSANDRA_CONF
+    else
+        echo "Couldn't find cassandra.yaml configuration file."
+        echo "Please specify its location by running $0 /path/to/cassandra.yaml"
         exit 1
     fi
 }
 
 locate_nodetool() {
-    # guess where cassandra is running from
-    if [ ! -f "$CASSANDRA_HOME" ] ; then
-        cassandra_info
-        echo "For higher confidence results, please set CASSANDRA_HOME environment variable"
-    fi
+    cassandra_info
     # can we just use nodetool, ie, is it in $PATH ?
     if [ -f "`which nodetool`" ] ; then
         NODETOOL="`which nodetool`" # yes, let's just use that
