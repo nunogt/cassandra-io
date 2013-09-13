@@ -5,6 +5,8 @@
 # 
 #CASSANDRA_IO_HOME="$HOME/.cassandra-io"
 
+CASSANDRA_CONF="$1"
+
 check_exit_status() {
     if [ "$1" != "0" ] ; then
         echo "Process exited with error code: $1"
@@ -45,7 +47,6 @@ bootstrap(){
     fi
     mkdir -p $CASSANDRA_IO_HOME/{log,snapshots}
     check_exit_status $?
-    CASSANDRA_CONF="$1"
     TIMESTAMP="`date +%s`"
     NODETOOL_LOG="$CASSANDRA_IO_HOME/log/snapshot-$TIMESTAMP.log"
 }
@@ -90,7 +91,7 @@ cassandra_info(){
         cassandra_parse_config $CASSANDRA_CONF
     else
         echo "Couldn't find cassandra.yaml configuration file."
-        echo "Please specify its location by running $0 /path/to/cassandra.yaml"
+        echo "Please specify its location by running $0 /path/to/cassandra/conf/cassandra.yaml"
         exit 1
     fi
 }
@@ -136,7 +137,7 @@ snapshot_store(){
     exit 0
 }
 
-bootstrap $1
+bootstrap
 locate_nodetool
 snapshot_nodetool
 snapshot_store
