@@ -44,6 +44,12 @@ resolve_links(){
     esac
 }
 
+bootstrap(){
+    if [ -z "$CASSANDRA_IO_HOME"] ; then
+        resolve_links
+    fi
+}
+
 cassandra_parse_config(){
     # we don't really parse the conf file; it's painful to do it in bash
     # let's just extract what we need for now and deal with yaml in future versions
@@ -97,4 +103,20 @@ cassandra_shutdown(){
     done;
 }
 
+clear_commitlog(){
+    if [ -d "$CASSANDRA_COMMITLOG" ] ; then
+        echo "Clearing all files in commitlog: $CASSANDRA_COMMITLOG"
+        echo "rm -f $CASSANDRA_COMMITLOG/*"
+    fi
+}
+
+restore_latest_snapshot(){
+    SNAPSHOT="$CASSANDRA_IO_HOME/snapshots/`ls -1 $CASSANDRA_IO_HOME/snapshots/ | tail -n 1`"
+    rsync -nav --progress --delete $SNAPSHOT/ $CASSANDRA_DATA/
+
+}
+
+bootstrap
 cassandra_shutdown
+clear_commitlog
+restore_latest_snapshot
