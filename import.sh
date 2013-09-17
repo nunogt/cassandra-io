@@ -110,6 +110,12 @@ clear_commitlog(){
     fi
 }
 
+clear_dbfiles(){
+    for i in `find $CASSANDRA_DATA -iname "*.db" -and -not -path "*snapshots*" -and -not -path "*backups*"` ; do
+        rm -f $i
+    done
+}
+
 restore_latest_snapshot(){
     SNAPSHOT_NUMBER="`ls -1 $CASSANDRA_IO_HOME/snapshots/ | tail -n 1`"
     SNAPSHOT="$CASSANDRA_IO_HOME/snapshots/$SNAPSHOT_NUMBER"
@@ -122,4 +128,5 @@ restore_latest_snapshot(){
 bootstrap
 cassandra_shutdown
 clear_commitlog
+clear_dbfiles
 restore_latest_snapshot
