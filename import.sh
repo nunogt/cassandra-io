@@ -106,14 +106,17 @@ cassandra_shutdown(){
 clear_commitlog(){
     if [ -d "$CASSANDRA_COMMITLOG" ] ; then
         echo "Clearing all files in commitlog: $CASSANDRA_COMMITLOG"
-        echo "rm -f $CASSANDRA_COMMITLOG/*"
+        rm -f $CASSANDRA_COMMITLOG/*
     fi
 }
 
 restore_latest_snapshot(){
-    SNAPSHOT="$CASSANDRA_IO_HOME/snapshots/`ls -1 $CASSANDRA_IO_HOME/snapshots/ | tail -n 1`"
-    rsync -nav --progress --delete $SNAPSHOT/ $CASSANDRA_DATA/
-
+    SNAPSHOT_NUMBER="`ls -1 $CASSANDRA_IO_HOME/snapshots/ | tail -n 1`"
+    SNAPSHOT="$CASSANDRA_IO_HOME/snapshots/$SNAPSHOT_NUMBER"
+    rsync -a --progress $SNAPSHOT/ $CASSANDRA_DATA/
+    for i in `find $CASSANDRA_DATA/ -type d -iname "$SNAPSHOT_NUMBER"` ; do
+        rsync -a $i/ ${i%%snapshots/$SNAPSHOT_NUMBER}/
+    done
 }
 
 bootstrap
