@@ -60,15 +60,10 @@ cassandra_parse_config(){
 }
 
 cassandra_info(){
-    pids="`pgrep java`"
-    if [ ! -z "$pids" ] ; then
-        for pid in $pids ; do
-            proc="`ps uwx | grep $pid | grep CassandraDaemon | grep -v grep | awk '{print $2}'`"
-            if [ "$proc" == "$pid" ] ; then
-                CASSANDRA_PID="$pid"
-                echo "Cassandra seems to be running with pid $CASSANDRA_PID (this is my best guess)"
-            fi
-        done
+    pid="`ps uwx | grep [C]assandraDaemon | awk '{print $2}'`"
+    if [ ! -z "$pid" ] ; then
+        CASSANDRA_PID="$pid"
+        echo "Cassandra seems to be running with pid $CASSANDRA_PID (this is my best guess)"
         if [ -z "$CASSANDRA_PID" ] ; then
             echo "Couldn't reliably determine Cassandra pidfile. Is it running?"
             exit 1
@@ -126,7 +121,7 @@ snapshot_store(){
     SNAPSHOTS=$(find $CASSANDRA_DATA/ -type d -iname "$SNAPSHOT_NUMBER")
     if [ ! -z "$SNAPSHOTS" ] ; then
         for s in $SNAPSHOTS ; do
-            rsync -aR $CASSANDRA_DATA/.`echo ${s#$CASSANDRA_DATA/}` $CASSANDRA_IO_HOME/snapshots/$SNAPSHOT_NUMBER/
+            rsync -aR $CASSANDRA_DATA/./`echo ${s#$CASSANDRA_DATA/}` $CASSANDRA_IO_HOME/snapshots/$SNAPSHOT_NUMBER/
             check_exit_status $?
         done
     else
