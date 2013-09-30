@@ -126,7 +126,7 @@ snapshot_store(){
     SNAPSHOTS=$(find $CASSANDRA_DATA/ -type d -iname "$SNAPSHOT_NUMBER")
     if [ ! -z "$SNAPSHOTS" ] ; then
         for s in $SNAPSHOTS ; do
-            rsync -aR $CASSANDRA_DATA/.`echo ${s#$CASSANDRA_DATA}` $CASSANDRA_IO_HOME/snapshots/$SNAPSHOT_NUMBER/
+            rsync -aR $CASSANDRA_DATA/./`echo ${s#$CASSANDRA_DATA/}` $CASSANDRA_IO_HOME/snapshots/$SNAPSHOT_NUMBER/
             check_exit_status $?
         done
     else
