@@ -7,6 +7,8 @@
 # 4. Locate the most recent snapshot folder in <data_directory_location>/<keyspace_name>/<column_family_name>/snapshots/<snapshot_name>, and copy its contents into the <data_directory_location>/<keyspace_name>/<column_family_name> directory.
 # 5. If using incremental backups, copy all contents of <data_directory_location>/<keyspace_name>/<column_family_name>/backups into <data_directory_location>/<keyspace_name>/<column_family_name>.
 # 6. Restart the node.
+# Additionally, to prevent cluster name mismatches, every LocationInfo-related files must be recreated, as per 
+# http://mail-archives.apache.org/mod_mbox/cassandra-user/201211.mbox/%3CCACHzRHZG2SBDW1YLpQeMuKy4sYHD2u-bUz-kJKMvfvGPXdiJ5g@mail.gmail.com%3E
 
 CASSANDRA_CONF="$1"
 
@@ -125,8 +127,16 @@ restore_latest_snapshot(){
     done
 }
 
+clear_locationinfo(){
+    echo "Resetting cluster properties..."
+    for i in `find $CASSANDRA_DATA/ -type d -iname "LocationInfo"` ; do
+        rm -rf $i
+    done
+}
+
 bootstrap
 cassandra_shutdown
 clear_commitlog
 clear_dbfiles
 restore_latest_snapshot
+clear_locationinfo
