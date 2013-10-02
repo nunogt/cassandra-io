@@ -128,8 +128,9 @@ restore_latest_snapshot(){
 }
 
 clear_locationinfo(){
+    CASSANDRA_DATA_SYSTEM="$CASSANDRA_DATA/system"
     echo "Resetting cluster properties..."
-    for i in `find $CASSANDRA_DATA/ -type d -iname "LocationInfo"` ; do
+    for i in `find $CASSANDRA_DATA_SYSTEM/ -type d -iname "LocationInfo" -or -iname "local"`; do
         rm -rf $i
     done
 }
