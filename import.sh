@@ -61,7 +61,7 @@ cassandra_parse_config(){
 }
 
 cassandra_info(){
-    pid="`ps uwx | grep [C]assandraDaemon | awk '{print $2}'`"
+    pid="`ps -ef | grep [C]assandraDaemon | awk '{print $2}'`"
     if [ ! -z "$pid" ] ; then
         CASSANDRA_PID="$pid"
         echo "Cassandra seems to be running with pid $CASSANDRA_PID (this is my best guess)"
