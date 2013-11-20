@@ -107,6 +107,13 @@ clear_commitlog(){
     fi
 }
 
+clear_caches(){
+    if [ -d "$CASSANDRA_CACHES" ] ; then
+        echo "Clearing all files in cache: $CASSANDRA_CACHES"
+        rm -f $CASSANDRA_CACHES/*
+    fi
+}
+
 clear_dbfiles(){
     for i in `find $CASSANDRA_DATA -iname "*.db" -and -not -path "*snapshots*" -and -not -path "*backups*"` ; do
         rm -f $i
@@ -133,6 +140,7 @@ clear_locationinfo(){
 bootstrap
 cassandra_shutdown
 clear_commitlog
+clear_caches
 clear_dbfiles
 restore_latest_snapshot
 clear_locationinfo
