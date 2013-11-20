@@ -61,27 +61,29 @@ cassandra_parse_config(){
 }
 
 cassandra_info(){
-    pid="`ps -ef | grep [C]assandraDaemon | awk '{print $2}'`"
-    if [ ! -z "$pid" ] ; then
-        CASSANDRA_PID="$pid"
-        echo "Cassandra seems to be running with pid $CASSANDRA_PID (this is my best guess)"
-        if [ -z "$CASSANDRA_PID" ] ; then
-            echo "Couldn't reliably determine Cassandra pidfile. Is it running?"
+    if [ -z "$CASSANDRA_CONF" ] ; then
+        pid="`ps -ef | grep [C]assandraDaemon | awk '{print $2}'`"
+        if [ ! -z "$pid" ] ; then
+            CASSANDRA_PID="$pid"
+            echo "Cassandra seems to be running with pid $CASSANDRA_PID (this is my best guess)"
+            if [ -z "$CASSANDRA_PID" ] ; then
+                echo "Couldn't reliably determine Cassandra pidfile. Is it running?"
+                exit 1
+            fi
+        else
+            echo "Cassandra is not running"
             exit 1
         fi
-    else
-        echo "Cassandra is not running"
-        exit 1
-    fi
-    if [ -z "$CASSANDRA_CONF" ] ; then
-        # attemp to determine cassandra.yaml location (lots of guesswork required)
-        if [ ! -f "$CASSANDRA_HOME/conf/cassandra.yaml" ] ; then
-            proccwd=`lsof -p $CASSANDRA_PID | grep cwd | awk '{print $9}'`
-            if [ -f "$proccwd/../conf/cassandra.yaml" ] ; then
-                CASSANDRA_HOME="`dirname $proccwd`"
+        if [ -z "$CASSANDRA_CONF" ] ; then
+            # attemp to determine cassandra.yaml location (lots of guesswork required)
+            if [ ! -f "$CASSANDRA_HOME/conf/cassandra.yaml" ] ; then
+                proccwd=`lsof -p $CASSANDRA_PID | grep cwd | awk '{print $9}'`
+                if [ -f "$proccwd/../conf/cassandra.yaml" ] ; then
+                    CASSANDRA_HOME="`dirname $proccwd`"
+                fi
             fi
+            CASSANDRA_CONF="$CASSANDRA_HOME/conf/cassandra.yaml"
         fi
-        CASSANDRA_CONF="$CASSANDRA_HOME/conf/cassandra.yaml"
     fi
     if [ -f "$CASSANDRA_CONF" ] ; then
         cassandra_parse_config $CASSANDRA_CONF
