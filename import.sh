@@ -72,7 +72,6 @@ cassandra_info(){
             fi
         else
             echo "Cassandra is not running"
-            exit 1
         fi
         if [ -z "$CASSANDRA_CONF" ] ; then
             # attemp to determine cassandra.yaml location (lots of guesswork required)
